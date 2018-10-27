@@ -2,8 +2,8 @@ process.stdin.on('readable', () => {
   const chunk = process.stdin.read();
   if (chunk !== null) {
     const input = String(chunk).split('\\n');
-    const { N, A, B, graph } = createDataFromInput(input)
-    findAllWays(N, A, B, graph, [], 0);
+    const { N, A, B, graph } = createDataFromInput(input);
+    findAllWays(N, A, B, graph, [], A - 1);
   }
 });
 
@@ -13,34 +13,33 @@ function createDataFromInput(input) {
   const A = nodes[0];
   const B = nodes[1];
   const rawGraph = input.slice(2);
-  const graph = rawGraph.filter(row => row !== '').map(row => {
-    return row.split(' ').reduce((acc, key, i) => {
-      if (key === '1') {
-        return { ...acc, [i]: false }
-      }
-      return acc;
-    }, {})
+  const graph = rawGraph.filter(row => row !== '\r\n' && row !== '').map((row, index) => {
+    return row.split(' ').reduce(
+      (acc, key, i) => {
+        if (key === '1' && index !== i) {
+          acc.nodes.push(i);
+        }
+        return acc;
+      },
+      { nodes: [], visited: false },
+    );
   });
-  return { N, A, B, graph};
+  return { N, A, B, graph };
 }
 
 function findAllWays(N, A, B, graph, path, vertex) {
-  if (Number(vertex) === B - 1) {
+  if (vertex === B - 1) {
     path.push(Number(vertex) + 1);
     console.log(path.join(' '));
-    return false;
+    return;
   }
-  const nodes = Object.keys(graph[vertex]);
+  graph[vertex].visited = true;
+  const nodes = graph[vertex].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    const node = nodes[i];
-    if (graph[vertex][node] === true) {
+    const nextVertex = nodes[i];
+    if (graph[nextVertex].visited === true) {
       continue;
     }
-    if (Number(node) <= vertex) {
-      graph[vertex][node] = true;
-      continue;
-    }
-    graph[vertex][node] = true;
-    findAllWays(N, A, B, graph, [...path, Number(vertex) + 1], node);
+    findAllWays(N, A, B, graph, [...path, vertex + 1], nextVertex);
   }
 }
